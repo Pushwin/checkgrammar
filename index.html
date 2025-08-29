@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Grammar Checker with AI</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-spell-check"></i> Advanced Grammar Checker</h1>
+            <p>AI-powered grammar correction with comprehensive error detection</p>
+            <div class="theme-toggle" onclick="toggleTheme()">
+                <i class="fas fa-moon" id="themeIcon"></i>
+            </div>
+        </header>
+
+        <div class="api-config">
+            <div class="config-toggle" onclick="toggleApiConfig()">
+                <i class="fas fa-cog"></i> API Configuration
+                <i class="fas fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="config-panel" id="configPanel">
+                <label for="apiKey">Google Gemini API Key:</label>
+                <div class="api-key-input">
+                    <input type="password" id="apiKey" placeholder="Enter your Google Gemini API key (optional)">
+                    <button type="button" onclick="toggleApiKeyVisibility()" class="toggle-visibility">
+                        <i class="fas fa-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+                <small>Leave empty to use rule-based correction only. Get your free API key from <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></small>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <label for="inputText">Enter text to check:</label>
+            <textarea id="inputText" placeholder="Type or paste your text here for grammar checking..."></textarea>
+            <div class="input-controls">
+                <button onclick="checkGrammar()" class="primary-btn" id="checkBtn">
+                    <i class="fas fa-search"></i> Check Grammar
+                </button>
+                <button onclick="clearText()" class="secondary-btn">
+                    <i class="fas fa-eraser"></i> Clear
+                </button>
+                <button onclick="pasteFromClipboard()" class="secondary-btn">
+                    <i class="fas fa-paste"></i> Paste
+                </button>
+                <div class="word-count" id="wordCount">0 words</div>
+            </div>
+        </div>
+
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <div class="correction-tabs">
+                <button class="tab-btn active" onclick="showTab('ai')" id="aiTab">
+                    <i class="fas fa-robot"></i> AI Correction
+                </button>
+                <button class="tab-btn" onclick="showTab('rules')" id="rulesTab">
+                    <i class="fas fa-list"></i> Rule-based Correction
+                </button>
+                <button class="tab-btn" onclick="showTab('analysis')" id="analysisTab">
+                    <i class="fas fa-chart-bar"></i> Analysis
+                </button>
+            </div>
+
+            <div class="tab-content active" id="aiContent">
+                <div class="result-header">
+                    <h3><i class="fas fa-robot"></i> AI-Powered Correction</h3>
+                    <div class="status" id="aiStatus"></div>
+                </div>
+                <div class="output-text" id="aiOutputText"></div>
+                <div class="output-actions">
+                    <button onclick="copyText('ai')" class="action-btn">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                    <button onclick="speakText('ai')" class="action-btn">
+                        <i class="fas fa-volume-up"></i> Listen
+                    </button>
+                    <button onclick="downloadText('ai')" class="action-btn">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+                <div class="ai-suggestions" id="aiSuggestions"></div>
+            </div>
+
+            <div class="tab-content" id="rulesContent">
+                <div class="result-header">
+                    <h3><i class="fas fa-list"></i> Rule-based Correction</h3>
+                </div>
+                <div class="output-text" id="rulesOutputText"></div>
+                <div class="output-actions">
+                    <button onclick="copyText('rules')" class="action-btn">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                    <button onclick="speakText('rules')" class="action-btn">
+                        <i class="fas fa-volume-up"></i> Listen
+                    </button>
+                    <button onclick="downloadText('rules')" class="action-btn">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+                <div class="applied-rules" id="appliedRules"></div>
+            </div>
+
+            <div class="tab-content" id="analysisContent">
+                <div class="result-header">
+                    <h3><i class="fas fa-chart-bar"></i> Grammar Analysis</h3>
+                </div>
+                <div class="analysis-grid">
+                    <div class="analysis-card">
+                        <h4>Errors Found</h4>
+                        <div class="stat-value" id="errorsCount">0</div>
+                    </div>
+                    <div class="analysis-card">
+                        <h4>Corrections Made</h4>
+                        <div class="stat-value" id="correctionsCount">0</div>
+                    </div>
+                    <div class="analysis-card">
+                        <h4>Reading Level</h4>
+                        <div class="stat-value" id="readingLevel">-</div>
+                    </div>
+                    <div class="analysis-card">
+                        <h4>Confidence Score</h4>
+                        <div class="stat-value" id="confidenceScore">-</div>
+                    </div>
+                    <div class="analysis-card">
+                        <h4>Grammar Score</h4>
+                        <div class="stat-value" id="grammarScore">-</div>
+                    </div>
+                    <div class="analysis-card">
+                        <h4>Word Count</h4>
+                        <div class="stat-value" id="totalWords">0</div>
+                    </div>
+                    <div class="analysis-card">
+                        <h4>Sentences</h4>
+                        <div class="stat-value" id="sentenceCount">0</div>
+                    </div>
+                    <div class="analysis-card">
+                        <h4>Avg Word Length</h4>
+                        <div class="stat-value" id="avgWordLength">0</div>
+                    </div>
+                </div>
+                <div class="error-breakdown" id="errorBreakdown"></div>
+            </div>
+        </div>
+
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Analyzing your text...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="wordLibrary.js"></script>
+    <script src="grammarLogic.js"></script>
+</body>
+</html>
