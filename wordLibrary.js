@@ -52,7 +52,6 @@ const wordLibrary = {
         write: { base: "write", present: "writes", past: "wrote", pastParticiple: "written", ing: "writing" },
         speak: { base: "speak", present: "speaks", past: "spoke", pastParticiple: "spoken", ing: "speaking" },
         
-        // Extended verb list for better grammar checking
         abide: { base: "abide", present: "abides", past: "abode", pastParticiple: "abode", ing: "abiding" },
         accept: { base: "accept", present: "accepts", past: "accepted", pastParticiple: "accepted", ing: "accepting" },
         achieve: { base: "achieve", present: "achieves", past: "achieved", pastParticiple: "achieved", ing: "achieving" },
