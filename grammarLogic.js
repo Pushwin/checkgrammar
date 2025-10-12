@@ -1,6 +1,6 @@
 
 // API Key Configuration - Loaded from config.js
-const GROQ_API_KEY = CONFIG.GROQ_API_KEY; 
+const GROQ_API_KEY = CONFIG.GROQ_API_KEY;
 
 let appliedRulesList = [];
 let errorAnalysis = {
