@@ -1,7 +1,7 @@
-// Comprehensive Grammar Logic Engine
-// This module provides extensive grammar correction capabilities
 
-// Global variables for tracking corrections and analysis
+// API Key Configuration - Loaded from config.js
+const GROQ_API_KEY = CONFIG.GROQ_API_KEY; 
+
 let appliedRulesList = [];
 let errorAnalysis = {
     total: 0,
@@ -10,17 +10,14 @@ let errorAnalysis = {
     confidence: 0
 };
 
-// API configuration
 const API_CONFIG = {
-    gemini: {
-        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
-        model: 'gemini-1.5-flash-latest'
+    groq: {
+        url: 'https://api.groq.com/openai/v1/chat/completions',
+        model: 'llama-3.1-8b-instant'
     }
 };
 
-// Advanced Grammar Patterns and Rules
 const GRAMMAR_PATTERNS = {
-    // Subject-verb agreement patterns
     subjectVerbPatterns: {
         singular: {
             pronouns: ['he', 'she', 'it', 'this', 'that'],
@@ -44,7 +41,6 @@ const GRAMMAR_PATTERNS = {
         }
     },
 
-    // Tense consistency patterns
     tensePatterns: {
         past: {
             indicators: ['yesterday', 'last week', 'last month', 'last year', 'ago', 'before', 'previously', 'earlier', 'then', 'once upon a time', 'in the past', 'formerly'],
@@ -60,7 +56,6 @@ const GRAMMAR_PATTERNS = {
         }
     },
 
-    // Modal verb patterns
     modalPatterns: {
         modals: ['can', 'could', 'may', 'might', 'will', 'would', 'shall', 'should', 'must', 'ought to'],
         rules: {
@@ -69,7 +64,6 @@ const GRAMMAR_PATTERNS = {
         }
     },
 
-    // Preposition patterns
     prepositionPatterns: {
         time: {
             'at': ['time', 'night', 'noon', 'midnight', 'dawn', 'dusk'],
@@ -84,9 +78,7 @@ const GRAMMAR_PATTERNS = {
     }
 };
 
-// Extended common errors and corrections
 const COMMON_ERRORS = {
-    // Spelling corrections
     spelling: {
         'recieve': 'receive', 'seperate': 'separate', 'definately': 'definitely',
         'occured': 'occurred', 'neccessary': 'necessary', 'accomodate': 'accommodate',
@@ -98,7 +90,6 @@ const COMMON_ERRORS = {
         'calender': 'calendar', 'enviroment': 'environment', 'goverment': 'government'
     },
 
-    // Grammar corrections
     grammar: {
         'should of': 'should have', 'could of': 'could have', 'would of': 'would have',
         'might of': 'might have', 'must of': 'must have',
@@ -106,7 +97,6 @@ const COMMON_ERRORS = {
         'irregardless': 'regardless', 'orientate': 'orient'
     },
 
-    // Wrong verb forms
     verbForms: {
         'buyed': 'bought', 'catched': 'caught', 'cutted': 'cut', 'drawed': 'drew',
         'eated': 'ate', 'finded': 'found', 'goed': 'went', 'growed': 'grew',
@@ -117,7 +107,6 @@ const COMMON_ERRORS = {
         'throwed': 'threw', 'waked': 'woke', 'winned': 'won', 'writed': 'wrote'
     },
 
-    // Contractions
     contractions: {
         'dont': "don't", 'cant': "can't", 'wont': "won't", 'shouldnt': "shouldn't",
         'couldnt': "couldn't", 'wouldnt': "wouldn't", 'isnt': "isn't", 'arent': "aren't",
@@ -126,7 +115,6 @@ const COMMON_ERRORS = {
     }
 };
 
-// Main grammar checking function
 async function checkGrammar() {
     const input = document.getElementById("inputText").value.trim();
     
@@ -139,17 +127,12 @@ async function checkGrammar() {
     resetResults();
 
     try {
-        const apiKey = document.getElementById("apiKey").value.trim() || 
-                      (typeof process !== 'undefined' ? process.env.GOOGLE_API_KEY : null);
-
-        // Perform comprehensive rule-based correction
         const ruleBasedResult = performComprehensiveCorrection(input);
         displayRuleBasedResults(ruleBasedResult);
 
-        // Attempt AI correction if available
-        if (apiKey) {
+        if (GROQ_API_KEY && GROQ_API_KEY !== 'YOUR_GROQ_API_KEY_HERE') {
             try {
-                const aiResult = await performAICorrection(input, apiKey);
+                const aiResult = await performGroqAICorrection(input);
                 displayAIResults(aiResult);
                 updateAnalysis(ruleBasedResult, aiResult);
                 setStatus('aiStatus', 'success', 'AI correction completed');
@@ -160,7 +143,7 @@ async function checkGrammar() {
             }
         } else {
             displayAIFallback(ruleBasedResult);
-            setStatus('aiStatus', 'warning', 'API key required for AI correction');
+            setStatus('aiStatus', 'warning', 'Get free API key from console.groq.com');
         }
 
         document.getElementById('resultsSection').style.display = 'block';
@@ -173,7 +156,98 @@ async function checkGrammar() {
     }
 }
 
-// Comprehensive rule-based correction engine
+async function performGroqAICorrection(text) {
+    const prompt = `You are a grammar correction expert. Analyze and correct the following text for grammar, spelling, punctuation, and style. 
+
+Provide your response ONLY as a valid JSON object with this exact structure:
+{
+  "corrected": "the corrected text here",
+  "errors": [
+    {
+      "type": "grammar",
+      "original": "original text",
+      "correction": "corrected text",
+      "explanation": "brief explanation"
+    }
+  ],
+  "confidence": 0.95,
+  "suggestions": [
+    {
+      "type": "style",
+      "suggestion": "suggestion text"
+    }
+  ]
+}
+
+Text to correct: "${text}"
+
+Remember: Respond ONLY with valid JSON, no additional text.`;
+
+    try {
+        const response = await fetch(API_CONFIG.groq.url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: API_CONFIG.groq.model,
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a professional grammar correction assistant. Always respond with valid JSON only."
+                    },
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ],
+                temperature: 0.3,
+                max_tokens: 1500
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Groq API request failed: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        const aiResponseText = data.choices[0].message.content;
+        
+        let aiResponse;
+        try {
+            const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                aiResponse = JSON.parse(jsonMatch[0]);
+            } else {
+                aiResponse = JSON.parse(aiResponseText);
+            }
+        } catch (parseError) {
+            console.error('Failed to parse AI response:', aiResponseText);
+            aiResponse = {
+                corrected: text,
+                errors: [],
+                confidence: 0.5,
+                suggestions: []
+            };
+        }
+
+        return {
+            original: text,
+            corrected: aiResponse.corrected || text,
+            errors: aiResponse.errors || [],
+            confidence: aiResponse.confidence || 0.8,
+            suggestions: aiResponse.suggestions || [],
+            source: 'ai'
+        };
+
+    } catch (error) {
+        console.error('Groq AI correction error:', error);
+        throw new Error(`AI correction failed: ${error.message}`);
+    }
+}
+
 function performComprehensiveCorrection(input) {
     let sentences = splitIntoSentences(input);
     let correctedSentences = [];
@@ -197,18 +271,15 @@ function performComprehensiveCorrection(input) {
     };
 }
 
-// Split text into sentences for better analysis
 function splitIntoSentences(text) {
     return text.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 0);
 }
 
-// Correct individual sentence with all rules
 function correctSentence(sentence) {
     let words = tokenizeWords(sentence);
     let corrected = [...words];
     let corrections = 0;
 
-    // Apply all correction rules in order
     corrections += applySpellingCorrections(corrected);
     corrections += applyContractionsCorrections(corrected);
     corrections += applyVerbFormCorrections(corrected);
@@ -220,7 +291,6 @@ function correctSentence(sentence) {
     corrections += applyCapitalizationRules(corrected);
     corrections += applyPunctuationRules(corrected);
     corrections += applyPluralSingularRules(corrected);
-    corrections += applyWordOrderRules(corrected);
     corrections += applyRedundancyRules(corrected);
     corrections += applyComparativeSuperlativeRules(corrected);
     corrections += applyPronounRules(corrected);
@@ -231,7 +301,6 @@ function correctSentence(sentence) {
     };
 }
 
-// Tokenize words while preserving punctuation context
 function tokenizeWords(sentence) {
     return sentence.toLowerCase()
         .replace(/[.!?;:,]/g, ' $& ')
@@ -239,7 +308,6 @@ function tokenizeWords(sentence) {
         .filter(w => w.trim().length > 0);
 }
 
-// Spelling corrections
 function applySpellingCorrections(words) {
     let corrections = 0;
     for (let i = 0; i < words.length; i++) {
@@ -248,20 +316,11 @@ function applySpellingCorrections(words) {
             words[i] = words[i].replace(word, COMMON_ERRORS.spelling[word]);
             addAppliedRule(`Spelling: "${word}" → "${COMMON_ERRORS.spelling[word]}"`);
             corrections++;
-        } else {
-            // Advanced spell checking using Levenshtein distance
-            let suggestion = findBestSpellingSuggestion(word);
-            if (suggestion && suggestion !== word) {
-                words[i] = words[i].replace(word, suggestion);
-                addAppliedRule(`Spell check: "${word}" → "${suggestion}"`);
-                corrections++;
-            }
         }
     }
     return corrections;
 }
 
-// Contractions corrections
 function applyContractionsCorrections(words) {
     let corrections = 0;
     for (let i = 0; i < words.length; i++) {
@@ -275,7 +334,6 @@ function applyContractionsCorrections(words) {
     return corrections;
 }
 
-// Verb form corrections
 function applyVerbFormCorrections(words) {
     let corrections = 0;
     for (let i = 0; i < words.length; i++) {
@@ -286,7 +344,6 @@ function applyVerbFormCorrections(words) {
             corrections++;
         }
         
-        // Grammar pattern corrections
         if (COMMON_ERRORS.grammar[word]) {
             words[i] = words[i].replace(word, COMMON_ERRORS.grammar[word]);
             addAppliedRule(`Grammar: "${word}" → "${COMMON_ERRORS.grammar[word]}"`);
@@ -296,13 +353,11 @@ function applyVerbFormCorrections(words) {
     return corrections;
 }
 
-// Article corrections (a/an/the)
 function applyArticleCorrections(words) {
     let corrections = 0;
     for (let i = 0; i < words.length; i++) {
         let word = cleanWord(words[i]);
         
-        // A/An corrections
         if (word === 'a' || word === 'an') {
             let nextWord = i + 1 < words.length ? cleanWord(words[i + 1]) : '';
             if (nextWord && isVowelSound(nextWord)) {
@@ -320,7 +375,6 @@ function applyArticleCorrections(words) {
             }
         }
 
-        // Remove article before plural nouns
         if ((word === 'a' || word === 'an') && i + 1 < words.length) {
             let nextWord = cleanWord(words[i + 1]);
             if (isPluralNoun(nextWord)) {
@@ -333,7 +387,6 @@ function applyArticleCorrections(words) {
     return corrections;
 }
 
-// Subject-verb agreement
 function applySubjectVerbAgreement(words) {
     let corrections = 0;
     
@@ -341,7 +394,6 @@ function applySubjectVerbAgreement(words) {
         let subject = cleanWord(words[i]);
         let verb = cleanWord(words[i + 1]);
         
-        // Singular subjects
         if (GRAMMAR_PATTERNS.subjectVerbPatterns.singular.pronouns.includes(subject)) {
             let correctVerb = getCorrectVerbForm(verb, 'singular');
             if (correctVerb && correctVerb !== verb) {
@@ -351,7 +403,6 @@ function applySubjectVerbAgreement(words) {
             }
         }
         
-        // Plural subjects
         if (GRAMMAR_PATTERNS.subjectVerbPatterns.plural.pronouns.includes(subject)) {
             let correctVerb = getCorrectVerbForm(verb, 'plural');
             if (correctVerb && correctVerb !== verb) {
@@ -361,7 +412,6 @@ function applySubjectVerbAgreement(words) {
             }
         }
 
-        // Special cases for "don't" vs "doesn't"
         if (['he', 'she', 'it'].includes(subject) && verb === "don't") {
             words[i + 1] = words[i + 1].replace("don't", "doesn't");
             addAppliedRule(`Contraction agreement: "don't" → "doesn't" with third person singular`);
@@ -372,7 +422,6 @@ function applySubjectVerbAgreement(words) {
     return corrections;
 }
 
-// Tense consistency checking
 function applyTenseConsistency(words) {
     let corrections = 0;
     let detectedTense = detectTense(words);
@@ -394,7 +443,6 @@ function applyTenseConsistency(words) {
     return corrections;
 }
 
-// Modal verb rules
 function applyModalVerbRules(words) {
     let corrections = 0;
     
@@ -403,7 +451,6 @@ function applyModalVerbRules(words) {
         if (GRAMMAR_PATTERNS.modalPatterns.modals.includes(word)) {
             let nextWord = cleanWord(words[i + 1]);
             
-            // Modal + base form rule
             if (wordLibrary.verbs[nextWord]) {
                 let baseForm = wordLibrary.verbs[nextWord].base || nextWord;
                 if (baseForm !== nextWord) {
@@ -413,7 +460,6 @@ function applyModalVerbRules(words) {
                 }
             }
             
-            // Check for double modals
             if (GRAMMAR_PATTERNS.modalPatterns.modals.includes(nextWord)) {
                 words[i] = '';
                 addAppliedRule(`Removed double modal: "${word} ${nextWord}" → "${nextWord}"`);
@@ -425,7 +471,6 @@ function applyModalVerbRules(words) {
     return corrections;
 }
 
-// Preposition rules
 function applyPrepositionRules(words) {
     let corrections = 0;
     
@@ -433,7 +478,6 @@ function applyPrepositionRules(words) {
         let prep = cleanWord(words[i]);
         let nextWord = cleanWord(words[i + 1]);
         
-        // Time prepositions
         if (['at', 'in', 'on'].includes(prep)) {
             let correctPrep = getCorrectTimePreposition(nextWord);
             if (correctPrep && correctPrep !== prep && isTimeWord(nextWord)) {
@@ -442,7 +486,6 @@ function applyPrepositionRules(words) {
                 corrections++;
             }
             
-            // Place prepositions
             let correctPlacePrep = getCorrectPlacePreposition(nextWord);
             if (correctPlacePrep && correctPlacePrep !== prep && isPlaceWord(nextWord)) {
                 words[i] = words[i].replace(prep, correctPlacePrep);
@@ -455,11 +498,9 @@ function applyPrepositionRules(words) {
     return corrections;
 }
 
-// Capitalization rules
 function applyCapitalizationRules(words) {
     let corrections = 0;
     
-    // Capitalize first word
     if (words.length > 0) {
         let firstWord = words[0];
         let capitalizedFirst = capitalizeFirstLetter(firstWord);
@@ -470,7 +511,6 @@ function applyCapitalizationRules(words) {
         }
     }
     
-    // Capitalize "I"
     for (let i = 0; i < words.length; i++) {
         if (cleanWord(words[i]) === 'i' && !isPunctuation(words[i])) {
             words[i] = words[i].replace('i', 'I');
@@ -482,11 +522,9 @@ function applyCapitalizationRules(words) {
     return corrections;
 }
 
-// Punctuation rules
 function applyPunctuationRules(words) {
     let corrections = 0;
     
-    // Add period at end if missing
     let lastWord = words[words.length - 1];
     if (lastWord && !endsWithPunctuation(lastWord)) {
         words[words.length - 1] = lastWord + '.';
@@ -497,14 +535,12 @@ function applyPunctuationRules(words) {
     return corrections;
 }
 
-// Plural/Singular rules
 function applyPluralSingularRules(words) {
     let corrections = 0;
     
     for (let i = 0; i < words.length; i++) {
         let word = cleanWord(words[i]);
         
-        // Check for uncountable nouns used as plural
         if (isUncountableNoun(word) && word.endsWith('s')) {
             let singular = word.slice(0, -1);
             words[i] = words[i].replace(word, singular);
@@ -516,21 +552,9 @@ function applyPluralSingularRules(words) {
     return corrections;
 }
 
-// Word order rules
-function applyWordOrderRules(words) {
-    let corrections = 0;
-    
-    // Basic adjective order corrections could be implemented here
-    // This is a complex area that would require extensive patterns
-    
-    return corrections;
-}
-
-// Redundancy rules
 function applyRedundancyRules(words) {
     let corrections = 0;
     
-    // Remove duplicate consecutive words
     for (let i = 0; i < words.length - 1; i++) {
         if (cleanWord(words[i]) === cleanWord(words[i + 1]) && !isPunctuation(words[i])) {
             words[i + 1] = '';
@@ -542,14 +566,12 @@ function applyRedundancyRules(words) {
     return corrections;
 }
 
-// Comparative and superlative rules
 function applyComparativeSuperlativeRules(words) {
     let corrections = 0;
     
     for (let i = 0; i < words.length; i++) {
         let word = cleanWord(words[i]);
         
-        // Check for double comparatives (more better → better)
         if (word === 'more' && i + 1 < words.length) {
             let nextWord = cleanWord(words[i + 1]);
             if (nextWord.endsWith('er') || ['better', 'worse'].includes(nextWord)) {
@@ -559,7 +581,6 @@ function applyComparativeSuperlativeRules(words) {
             }
         }
         
-        // Check for double superlatives (most best → best)
         if (word === 'most' && i + 1 < words.length) {
             let nextWord = cleanWord(words[i + 1]);
             if (nextWord.endsWith('est') || ['best', 'worst'].includes(nextWord)) {
@@ -573,11 +594,9 @@ function applyComparativeSuperlativeRules(words) {
     return corrections;
 }
 
-// Pronoun rules
 function applyPronounRules(words) {
     let corrections = 0;
     
-    // Basic pronoun agreement and case corrections
     const pronounCorrections = {
         'me and him': 'he and I',
         'him and me': 'he and I',
@@ -599,7 +618,6 @@ function applyPronounRules(words) {
     return corrections;
 }
 
-// Helper functions
 
 function cleanWord(word) {
     return word.replace(/[.!?;:,]/g, '').toLowerCase();
@@ -620,27 +638,44 @@ function isVowelSound(word) {
 }
 
 function isPluralNoun(word) {
-    // Check if word is plural based on word library and common patterns
-    if (word.endsWith('s') && !word.endsWith('ss') && word.length > 2) {
-        let singular = word.slice(0, -1);
-        return wordLibrary.nouns[singular] || isCommonNoun(word);
+    for (let noun in wordLibrary.nouns) {
+        if (wordLibrary.nouns[noun][1] === word) {
+            return true;
+        }
     }
     
-    // Check irregular plurals
-    const irregularPlurals = ['children', 'men', 'women', 'people', 'feet', 'teeth', 'mice', 'geese'];
-    return irregularPlurals.includes(word);
+    if (word.endsWith('s') && !word.endsWith('ss') && word.length > 2) {
+        let singular = word.slice(0, -1);
+        return wordLibrary.nouns[singular] !== undefined;
+    }
+    
+    return false;
 }
 
 function getCorrectVerbForm(verb, number) {
-    if (wordLibrary.verbs[verb]) {
-        if (number === 'singular') {
-            return wordLibrary.verbs[verb].present || 
-                   GRAMMAR_PATTERNS.subjectVerbPatterns.singular.verbs[verb];
-        } else {
-            return wordLibrary.verbs[verb].base ||
-                   GRAMMAR_PATTERNS.subjectVerbPatterns.plural.verbs[verb];
+    for (let baseVerb in wordLibrary.verbs) {
+        let verbData = wordLibrary.verbs[baseVerb];
+        
+        if (verb === baseVerb || 
+            verb === verbData.present || 
+            verb === verbData.past || 
+            verb === verbData.pastParticiple || 
+            verb === verbData.ing) {
+            
+            if (number === 'singular') {
+                return verbData.present;
+            } else {
+                return verbData.base;
+            }
         }
     }
+    
+    if (number === 'singular' && !verb.endsWith('s')) {
+        return verb + 's';
+    } else if (number === 'plural' && verb.endsWith('s')) {
+        return verb.slice(0, -1);
+    }
+    
     return null;
 }
 
@@ -648,27 +683,25 @@ function detectTense(words) {
     let pastScore = 0, presentScore = 0, futureScore = 0;
     
     for (let word of words) {
-        let cleanWord = word.toLowerCase();
+        let cleanedWord = word.toLowerCase();
         
-        // Check time indicators
-        if (GRAMMAR_PATTERNS.tensePatterns.past.indicators.some(ind => cleanWord.includes(ind))) {
+        if (GRAMMAR_PATTERNS.tensePatterns.past.indicators.some(ind => cleanedWord.includes(ind))) {
             pastScore += 2;
         }
-        if (GRAMMAR_PATTERNS.tensePatterns.present.indicators.some(ind => cleanWord.includes(ind))) {
+        if (GRAMMAR_PATTERNS.tensePatterns.present.indicators.some(ind => cleanedWord.includes(ind))) {
             presentScore += 2;
         }
-        if (GRAMMAR_PATTERNS.tensePatterns.future.indicators.some(ind => cleanWord.includes(ind))) {
+        if (GRAMMAR_PATTERNS.tensePatterns.future.indicators.some(ind => cleanedWord.includes(ind))) {
             futureScore += 2;
         }
         
-        // Check auxiliary verbs
-        if (GRAMMAR_PATTERNS.tensePatterns.past.auxiliaries.includes(cleanWord)) {
+        if (GRAMMAR_PATTERNS.tensePatterns.past.auxiliaries.includes(cleanedWord)) {
             pastScore += 1;
         }
-        if (GRAMMAR_PATTERNS.tensePatterns.present.auxiliaries.includes(cleanWord)) {
+        if (GRAMMAR_PATTERNS.tensePatterns.present.auxiliaries.includes(cleanedWord)) {
             presentScore += 1;
         }
-        if (GRAMMAR_PATTERNS.tensePatterns.future.auxiliaries.includes(cleanWord)) {
+        if (GRAMMAR_PATTERNS.tensePatterns.future.auxiliaries.includes(cleanedWord)) {
             futureScore += 1;
         }
     }
@@ -684,15 +717,25 @@ function detectTense(words) {
 }
 
 function getCorrectTenseForm(verb, tense) {
-    if (!wordLibrary.verbs[verb]) return null;
-    
-    let verbData = wordLibrary.verbs[verb];
-    switch (tense) {
-        case 'past': return verbData.past;
-        case 'present': return verbData.present || verbData.base;
-        case 'future': return verbData.base;
-        default: return null;
+    for (let baseVerb in wordLibrary.verbs) {
+        let verbData = wordLibrary.verbs[baseVerb];
+        
+        if (verb === baseVerb || 
+            verb === verbData.present || 
+            verb === verbData.past || 
+            verb === verbData.pastParticiple || 
+            verb === verbData.ing) {
+            
+            switch (tense) {
+                case 'past': return verbData.past;
+                case 'present': return verbData.present || verbData.base;
+                case 'future': return verbData.base;
+                default: return null;
+            }
+        }
     }
+    
+    return null;
 }
 
 function getCorrectTimePreposition(timeWord) {
@@ -747,47 +790,6 @@ function isUncountableNoun(word) {
     return uncountableNouns.includes(word.replace(/s$/, ''));
 }
 
-function isCommonNoun(word) {
-    return wordLibrary.commonWords.includes(word) || 
-           Object.keys(wordLibrary.nouns).some(noun => 
-               wordLibrary.nouns[noun].includes(word)
-           );
-}
-
-function findBestSpellingSuggestion(word) {
-    if (word.length < 3) return null;
-    
-    let bestMatch = null;
-    let minDistance = 3; // Maximum allowed distance
-    
-    // Check against common words
-    for (let commonWord of wordLibrary.commonWords) {
-        if (Math.abs(commonWord.length - word.length) <= 2) {
-            let distance = levenshteinDistance(word, commonWord);
-            if (distance < minDistance && distance > 0) {
-                minDistance = distance;
-                bestMatch = commonWord;
-            }
-        }
-    }
-    
-    // Check against verb forms
-    for (let verb in wordLibrary.verbs) {
-        let verbForms = Object.values(wordLibrary.verbs[verb]);
-        for (let form of verbForms) {
-            if (typeof form === 'string' && Math.abs(form.length - word.length) <= 2) {
-                let distance = levenshteinDistance(word, form);
-                if (distance < minDistance && distance > 0) {
-                    minDistance = distance;
-                    bestMatch = form;
-                }
-            }
-        }
-    }
-    
-    return bestMatch;
-}
-
 function levenshteinDistance(str1, str2) {
     const matrix = [];
     
@@ -795,7 +797,7 @@ function levenshteinDistance(str1, str2) {
         matrix[i] = [i];
     }
     
-    for (let j = 0; j <= str1.length; j++) {
+    for (let j = 0; i <= str1.length; j++) {
         matrix[0][j] = j;
     }
     
@@ -816,159 +818,9 @@ function levenshteinDistance(str1, str2) {
     return matrix[str2.length][str1.length];
 }
 
-// AI-powered correction using Google Gemini
-async function performAICorrection(text, apiKey) {
-    const prompt = `Please analyze and correct the following text for grammar, spelling, punctuation, and style. Provide your response in JSON format with the following structure:
-{
-  "corrected": "the corrected text",
-  "errors": [
-    {
-      "type": "error type (grammar/spelling/punctuation/style)",
-      "original": "original text",
-      "correction": "corrected text",
-      "explanation": "brief explanation"
-    }
-  ],
-  "confidence": 0.95,
-  "suggestions": [
-    {
-      "type": "improvement type",
-      "suggestion": "suggestion text"
-    }
-  ]
-}
-
-Text to correct: "${text}"`;
-
-    try {
-        const response = await fetch(`${API_CONFIG.gemini.url}?key=${apiKey}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: prompt
-                    }]
-                }],
-                generationConfig: {
-                    temperature: 0.3,
-                    maxOutputTokens: 1500,
-                    responseMimeType: "application/json"
-                }
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        let aiResponse;
-        
-        try {
-            aiResponse = JSON.parse(data.candidates[0].content.parts[0].text);
-        } catch (parseError) {
-            aiResponse = {
-                corrected: text,
-                errors: [],
-                confidence: 0.5,
-                suggestions: []
-            };
-        }
-
-        return {
-            original: text,
-            corrected: aiResponse.corrected || text,
-            errors: aiResponse.errors || [],
-            confidence: aiResponse.confidence || 0.8,
-            suggestions: aiResponse.suggestions || [],
-            source: 'ai'
-        };
-
-    } catch (error) {
-        console.error('AI correction error:', error);
-        throw new Error(`AI correction failed: ${error.message}`);
-    }
-}
-
-// Advanced grammar analysis functions
-function analyzeGrammarComplexity(text) {
-    const words = text.split(/\s+/);
-    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-    
-    let complexityScore = 0;
-    
-    // Sentence length analysis
-    const avgSentenceLength = words.length / sentences.length;
-    if (avgSentenceLength > 20) complexityScore += 2;
-    else if (avgSentenceLength > 15) complexityScore += 1;
-    
-    // Vocabulary complexity
-    let complexWords = 0;
-    for (let word of words) {
-        if (word.length > 6) complexWords++;
-    }
-    const complexWordRatio = complexWords / words.length;
-    if (complexWordRatio > 0.3) complexityScore += 2;
-    else if (complexWordRatio > 0.2) complexityScore += 1;
-    
-    // Punctuation variety
-    const punctuationTypes = new Set([...text.matchAll(/[.!?;:,]/g)].map(m => m[0]));
-    if (punctuationTypes.size > 3) complexityScore += 1;
-    
-    return {
-        score: complexityScore,
-        level: complexityScore > 4 ? 'Complex' : complexityScore > 2 ? 'Moderate' : 'Simple',
-        avgSentenceLength: Math.round(avgSentenceLength),
-        complexWordRatio: Math.round(complexWordRatio * 100)
-    };
-}
-
-function detectWritingStyle(text) {
-    const indicators = {
-        formal: ['therefore', 'furthermore', 'consequently', 'moreover', 'nevertheless', 'however'],
-        informal: ['gonna', 'wanna', 'yeah', 'okay', 'cool', 'awesome'],
-        academic: ['analysis', 'hypothesis', 'methodology', 'furthermore', 'consequently'],
-        conversational: ['well', 'you know', 'like', 'actually', 'basically']
-    };
-    
-    const words = text.toLowerCase().split(/\s+/);
-    const scores = {};
-    
-    for (let style in indicators) {
-        scores[style] = 0;
-        for (let indicator of indicators[style]) {
-            scores[style] += words.filter(word => word.includes(indicator)).length;
-        }
-    }
-    
-    const dominantStyle = Object.keys(scores).reduce((a, b) => 
-        scores[a] > scores[b] ? a : b
-    );
-    
-    return dominantStyle;
-}
-
-// Utility functions
 function addAppliedRule(rule) {
     appliedRulesList.push(rule);
     errorAnalysis.corrections++;
-}
-
-function countDifferences(original, corrected) {
-    const originalWords = original.split(' ');
-    const correctedWords = corrected.split(' ');
-    let differences = 0;
-    
-    for (let i = 0; i < Math.max(originalWords.length, correctedWords.length); i++) {
-        if (originalWords[i] !== correctedWords[i]) {
-            differences++;
-        }
-    }
-    
-    return differences;
 }
 
 function calculateConfidence(corrections, totalWords) {
@@ -978,7 +830,6 @@ function calculateConfidence(corrections, totalWords) {
     return Math.min(1, confidence);
 }
 
-// Display functions
 function displayRuleBasedResults(result) {
     document.getElementById('rulesOutputText').textContent = result.corrected;
     
@@ -1044,7 +895,7 @@ function displayAIResults(result) {
 
 function displayAIFallback(ruleBasedResult) {
     document.getElementById('aiOutputText').textContent = ruleBasedResult.corrected;
-    document.getElementById('aiSuggestions').innerHTML = '<h4>AI Correction Unavailable</h4><p>Showing rule-based correction results instead. Add your API key to enable AI-powered grammar checking.</p>';
+    document.getElementById('aiSuggestions').innerHTML = '<h4>AI Correction Unavailable</h4><p>Get your FREE API key from <a href="https://console.groq.com/keys" target="_blank">console.groq.com</a> and paste it at the top of grammarLogic.js file.</p>';
 }
 
 function updateAnalysisStats(result) {
@@ -1131,7 +982,6 @@ function calculateReadingLevel(text) {
     const avgWordsPerSentence = words / sentences;
     const avgSyllablesPerWord = syllables / words;
     
-    // Flesch Reading Ease approximation
     const score = 206.835 - (1.015 * avgWordsPerSentence) - (84.6 * avgSyllablesPerWord);
     
     if (score >= 90) return "Very Easy";
@@ -1152,142 +1002,12 @@ function countSyllables(word) {
     return matches ? matches.length : 1;
 }
 
-// Enhanced helper functions that use existing wordLibrary
-function isPluralNoun(word) {
-    // Use existing wordLibrary data
-    for (let noun in wordLibrary.nouns) {
-        if (wordLibrary.nouns[noun][1] === word) {
-            return true;
-        }
-    }
-    
-    // Check common plural patterns
-    if (word.endsWith('s') && !word.endsWith('ss') && word.length > 2) {
-        let singular = word.slice(0, -1);
-        return wordLibrary.nouns[singular] !== undefined;
-    }
-    
-    return false;
-}
-
-function getCorrectVerbForm(verb, number) {
-    // Use existing wordLibrary verbs
-    for (let baseVerb in wordLibrary.verbs) {
-        let verbData = wordLibrary.verbs[baseVerb];
-        
-        // Check if input verb matches any form
-        if (verb === baseVerb || 
-            verb === verbData.present || 
-            verb === verbData.past || 
-            verb === verbData.pastParticiple || 
-            verb === verbData.ing) {
-            
-            if (number === 'singular') {
-                return verbData.present;
-            } else {
-                return verbData.base;
-            }
-        }
-    }
-    
-    // Fallback to pattern matching
-    if (number === 'singular' && !verb.endsWith('s')) {
-        return verb + 's';
-    } else if (number === 'plural' && verb.endsWith('s')) {
-        return verb.slice(0, -1);
-    }
-    
-    return null;
-}
-
-function getCorrectTenseForm(verb, tense) {
-    // Use existing wordLibrary verbs
-    for (let baseVerb in wordLibrary.verbs) {
-        let verbData = wordLibrary.verbs[baseVerb];
-        
-        if (verb === baseVerb || 
-            verb === verbData.present || 
-            verb === verbData.past || 
-            verb === verbData.pastParticiple || 
-            verb === verbData.ing) {
-            
-            switch (tense) {
-                case 'past': return verbData.past;
-                case 'present': return verbData.present || verbData.base;
-                case 'future': return verbData.base;
-                default: return null;
-            }
-        }
-    }
-    
-    return null;
-}
-
-function findBestSpellingSuggestion(word) {
-    if (word.length < 3) return null;
-    
-    let bestMatch = null;
-    let minDistance = 3;
-    
-    // Check against existing commonWords
-    for (let commonWord of wordLibrary.commonWords) {
-        if (Math.abs(commonWord.length - word.length) <= 2) {
-            let distance = levenshteinDistance(word, commonWord);
-            if (distance < minDistance && distance > 0) {
-                minDistance = distance;
-                bestMatch = commonWord;
-            }
-        }
-    }
-    
-    // Check against existing verb forms
-    for (let verb in wordLibrary.verbs) {
-        let verbData = wordLibrary.verbs[verb];
-        let verbForms = [verb, verbData.present, verbData.past, verbData.pastParticiple, verbData.ing];
-        
-        for (let form of verbForms) {
-            if (form && Math.abs(form.length - word.length) <= 2) {
-                let distance = levenshteinDistance(word, form);
-                if (distance < minDistance && distance > 0) {
-                    minDistance = distance;
-                    bestMatch = form;
-                }
-            }
-        }
-    }
-    
-    // Check against existing nouns
-    for (let noun in wordLibrary.nouns) {
-        let nounForms = wordLibrary.nouns[noun];
-        for (let form of nounForms) {
-            if (form && Math.abs(form.length - word.length) <= 2) {
-                let distance = levenshteinDistance(word, form);
-                if (distance < minDistance && distance > 0) {
-                    minDistance = distance;
-                    bestMatch = form;
-                }
-            }
-        }
-    }
-    
-    return bestMatch;
-}
-
-// UI Control functions
 function showTab(tabName) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
     
     document.getElementById(tabName + 'Tab').classList.add('active');
     document.getElementById(tabName + 'Content').classList.add('active');
-}
-
-function toggleApiConfig() {
-    const toggle = document.querySelector('.config-toggle');
-    const panel = document.getElementById('configPanel');
-    
-    toggle.classList.toggle('active');
-    panel.classList.toggle('open');
 }
 
 function clearText() {
@@ -1332,7 +1052,6 @@ function updateWordCount() {
     document.getElementById('wordCount').textContent = `${wordCount} words`;
 }
 
-// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     updateWordCount();
     

@@ -17,22 +17,6 @@
             </div>
         </header>
 
-        <div class="api-config">
-            <div class="config-toggle" onclick="toggleApiConfig()">
-                <i class="fas fa-cog"></i> API Configuration
-                <i class="fas fa-chevron-down toggle-icon"></i>
-            </div>
-            <div class="config-panel" id="configPanel">
-                <label for="apiKey">Google Gemini API Key:</label>
-                <div class="api-key-input">
-                    <input type="password" id="apiKey" placeholder="Enter your Google Gemini API key (optional)">
-                    <button type="button" onclick="toggleApiKeyVisibility()" class="toggle-visibility">
-                        <i class="fas fa-eye" id="eyeIcon"></i>
-                    </button>
-                </div>
-                <small>Leave empty to use rule-based correction only. Get your free API key from <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></small>
-            </div>
-        </div>
 
         <div class="input-section">
             <label for="inputText">Enter text to check:</label>
@@ -154,6 +138,69 @@
     </div>
 
     <script src="wordLibrary.js"></script>
+    <script src="config.js"></script>
     <script src="grammarLogic.js"></script>
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            const icon = document.getElementById('themeIcon');
+            if (document.body.classList.contains('dark-theme')) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        }
+
+        function pasteFromClipboard() {
+            navigator.clipboard.readText().then(text => {
+                document.getElementById('inputText').value = text;
+                updateWordCount();
+            }).catch(err => {
+                alert('Failed to read clipboard contents: ' + err);
+            });
+        }
+
+        function copyText(type) {
+            const textElement = type === 'ai' ? 'aiOutputText' : 'rulesOutputText';
+            const text = document.getElementById(textElement).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Text copied to clipboard!');
+            }).catch(err => {
+                alert('Failed to copy text: ' + err);
+            });
+        }
+
+        function speakText(type) {
+            const textElement = type === 'ai' ? 'aiOutputText' : 'rulesOutputText';
+            const text = document.getElementById(textElement).textContent;
+            
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                utterance.volume = 1;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert('Text-to-speech is not supported in your browser.');
+            }
+        }
+
+        function downloadText(type) {
+            const textElement = type === 'ai' ? 'aiOutputText' : 'rulesOutputText';
+            const text = document.getElementById(textElement).textContent;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `corrected-text-${type}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
 </body>
 </html>
