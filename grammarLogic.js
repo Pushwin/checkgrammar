@@ -1,11 +1,6 @@
-// Comprehensive Grammar Logic Engine
-// Using FREE Groq API - Get your free key from: https://console.groq.com
 
-// ⚠️ GET YOUR FREE API KEY: https://console.groq.com/keys
-// Replace 'YOUR_GROQ_API_KEY_HERE' with your actual free API key
-const GROQ_API_KEY = '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'; // ← Paste your free Groq API key here
+const GROQ_API_KEY = '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'; 
 
-// Global variables for tracking corrections and analysis
 let appliedRulesList = [];
 let errorAnalysis = {
     total: 0,
@@ -14,15 +9,13 @@ let errorAnalysis = {
     confidence: 0
 };
 
-// API configuration - FREE Groq API (Very Fast!)
 const API_CONFIG = {
     groq: {
         url: 'https://api.groq.com/openai/v1/chat/completions',
-        model: 'llama-3.1-8b-instant' // Fast and free model
+        model: 'llama-3.1-8b-instant'
     }
 };
 
-// Advanced Grammar Patterns and Rules
 const GRAMMAR_PATTERNS = {
     subjectVerbPatterns: {
         singular: {
@@ -84,7 +77,6 @@ const GRAMMAR_PATTERNS = {
     }
 };
 
-// Extended common errors and corrections
 const COMMON_ERRORS = {
     spelling: {
         'recieve': 'receive', 'seperate': 'separate', 'definately': 'definitely',
@@ -122,7 +114,6 @@ const COMMON_ERRORS = {
     }
 };
 
-// Main grammar checking function
 async function checkGrammar() {
     const input = document.getElementById("inputText").value.trim();
     
@@ -135,11 +126,9 @@ async function checkGrammar() {
     resetResults();
 
     try {
-        // Perform comprehensive rule-based correction
         const ruleBasedResult = performComprehensiveCorrection(input);
         displayRuleBasedResults(ruleBasedResult);
 
-        // Attempt AI correction with Groq (FREE API)
         if (GROQ_API_KEY && GROQ_API_KEY !== 'YOUR_GROQ_API_KEY_HERE') {
             try {
                 const aiResult = await performGroqAICorrection(input);
@@ -166,7 +155,6 @@ async function checkGrammar() {
     }
 }
 
-// AI-powered correction using FREE Groq API
 async function performGroqAICorrection(text) {
     const prompt = `You are a grammar correction expert. Analyze and correct the following text for grammar, spelling, punctuation, and style. 
 
@@ -228,7 +216,6 @@ Remember: Respond ONLY with valid JSON, no additional text.`;
         
         let aiResponse;
         try {
-            // Try to parse JSON from response
             const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
                 aiResponse = JSON.parse(jsonMatch[0]);
@@ -260,7 +247,6 @@ Remember: Respond ONLY with valid JSON, no additional text.`;
     }
 }
 
-// Comprehensive rule-based correction engine
 function performComprehensiveCorrection(input) {
     let sentences = splitIntoSentences(input);
     let correctedSentences = [];
@@ -284,12 +270,10 @@ function performComprehensiveCorrection(input) {
     };
 }
 
-// Split text into sentences for better analysis
 function splitIntoSentences(text) {
     return text.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 0);
 }
 
-// Correct individual sentence with all rules
 function correctSentence(sentence) {
     let words = tokenizeWords(sentence);
     let corrected = [...words];
@@ -316,7 +300,6 @@ function correctSentence(sentence) {
     };
 }
 
-// Tokenize words while preserving punctuation context
 function tokenizeWords(sentence) {
     return sentence.toLowerCase()
         .replace(/[.!?;:,]/g, ' $& ')
@@ -324,7 +307,6 @@ function tokenizeWords(sentence) {
         .filter(w => w.trim().length > 0);
 }
 
-// Spelling corrections
 function applySpellingCorrections(words) {
     let corrections = 0;
     for (let i = 0; i < words.length; i++) {
@@ -338,7 +320,6 @@ function applySpellingCorrections(words) {
     return corrections;
 }
 
-// Contractions corrections
 function applyContractionsCorrections(words) {
     let corrections = 0;
     for (let i = 0; i < words.length; i++) {
@@ -352,7 +333,6 @@ function applyContractionsCorrections(words) {
     return corrections;
 }
 
-// Verb form corrections
 function applyVerbFormCorrections(words) {
     let corrections = 0;
     for (let i = 0; i < words.length; i++) {
@@ -372,7 +352,6 @@ function applyVerbFormCorrections(words) {
     return corrections;
 }
 
-// Article corrections (a/an/the)
 function applyArticleCorrections(words) {
     let corrections = 0;
     for (let i = 0; i < words.length; i++) {
@@ -407,7 +386,6 @@ function applyArticleCorrections(words) {
     return corrections;
 }
 
-// Subject-verb agreement
 function applySubjectVerbAgreement(words) {
     let corrections = 0;
     
@@ -443,7 +421,6 @@ function applySubjectVerbAgreement(words) {
     return corrections;
 }
 
-// Tense consistency checking
 function applyTenseConsistency(words) {
     let corrections = 0;
     let detectedTense = detectTense(words);
@@ -465,7 +442,6 @@ function applyTenseConsistency(words) {
     return corrections;
 }
 
-// Modal verb rules
 function applyModalVerbRules(words) {
     let corrections = 0;
     
@@ -494,7 +470,6 @@ function applyModalVerbRules(words) {
     return corrections;
 }
 
-// Preposition rules
 function applyPrepositionRules(words) {
     let corrections = 0;
     
@@ -522,7 +497,6 @@ function applyPrepositionRules(words) {
     return corrections;
 }
 
-// Capitalization rules
 function applyCapitalizationRules(words) {
     let corrections = 0;
     
@@ -547,7 +521,6 @@ function applyCapitalizationRules(words) {
     return corrections;
 }
 
-// Punctuation rules
 function applyPunctuationRules(words) {
     let corrections = 0;
     
@@ -561,7 +534,6 @@ function applyPunctuationRules(words) {
     return corrections;
 }
 
-// Plural/Singular rules
 function applyPluralSingularRules(words) {
     let corrections = 0;
     
@@ -579,7 +551,6 @@ function applyPluralSingularRules(words) {
     return corrections;
 }
 
-// Redundancy rules
 function applyRedundancyRules(words) {
     let corrections = 0;
     
@@ -594,7 +565,6 @@ function applyRedundancyRules(words) {
     return corrections;
 }
 
-// Comparative and superlative rules
 function applyComparativeSuperlativeRules(words) {
     let corrections = 0;
     
@@ -623,7 +593,6 @@ function applyComparativeSuperlativeRules(words) {
     return corrections;
 }
 
-// Pronoun rules
 function applyPronounRules(words) {
     let corrections = 0;
     
@@ -648,7 +617,6 @@ function applyPronounRules(words) {
     return corrections;
 }
 
-// Helper functions
 
 function cleanWord(word) {
     return word.replace(/[.!?;:,]/g, '').toLowerCase();
@@ -861,7 +829,6 @@ function calculateConfidence(corrections, totalWords) {
     return Math.min(1, confidence);
 }
 
-// Display functions
 function displayRuleBasedResults(result) {
     document.getElementById('rulesOutputText').textContent = result.corrected;
     
@@ -1034,7 +1001,6 @@ function countSyllables(word) {
     return matches ? matches.length : 1;
 }
 
-// UI Control functions
 function showTab(tabName) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -1085,7 +1051,6 @@ function updateWordCount() {
     document.getElementById('wordCount').textContent = `${wordCount} words`;
 }
 
-// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     updateWordCount();
     
