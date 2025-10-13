@@ -1,6 +1,5 @@
 # Advanced Grammar Checker with AI
 
-[![Live Site](https://img.shields.io/badge/Live-Demo-blue)](https://checkgrammar.onrender.com)
 ## 🧠 Advanced Grammar Checker with AI  
 
 A powerful grammar correction platform that combines **AI-driven analysis** with **rule-based precision**, delivering instant, intelligent, and reliable writing assistance.  
